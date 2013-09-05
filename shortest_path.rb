@@ -25,14 +25,22 @@ module ShortestPath
       return nil
     end
 
+    graph.values.map(&:values).flatten.each do |distance|
+      return "Error: Negative Distances in Graph" if distance < 0 || !distance.is_a?(Numeric)
+    end
+
+    def remove_key(graph, key)
+      graph.dup.tap {|hash| hash.delete(key)}
+    end
+
     def extend_route(graph, route)
       lastcity = route[-1]
       if graph.has_key?(lastcity)
+        new_graph = remove_key(graph, lastcity)
         graph[lastcity].each do |nextcity, distance|
-          return "Error: Negative Distances in Graph" if distance < 0
           new_route = route + [nextcity]
           @routes[new_route] = @routes[route] + distance
-          extend_route(graph, new_route)
+          extend_route(new_graph, new_route)
         end
       end
     end
@@ -41,10 +49,10 @@ module ShortestPath
     @routes = {}
 
     graph[origin].each do |nextcity, distance|
-      return "Error: Negative Distances in Graph" if distance < 0
       route = [origin, nextcity]
       @routes[route] = distance
-      extend_route(graph, route)
+      new_graph = remove_key(graph, origin)
+      extend_route(new_graph, route)
     end
 
     all_paths = @routes.select {|route| route[-1] == destination}
@@ -60,7 +68,7 @@ module ShortestPath
       "Chicago" => {"Durham" => 781},
       "Dallas" => {"Durham" => 1176},
       "Durham" => {"Miami" => 300,
-                   "Orlando" => 250},
+                   "Chicago" => 250},
       "New York" => {"Los Angeles" => 399}
     }
   end
